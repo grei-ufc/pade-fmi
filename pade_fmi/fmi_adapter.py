@@ -8,8 +8,8 @@ from pade.acl.messages import ACLMessage
 
 class FmiAdapter(Behaviour):
     """
-        The FMI adapter is a behaviour that makes is possible for agents 
-        to communicate with FMI Wrappers.
+        The FMI adapter is a behaviour that makes it possible for agents 
+        to communicate with an FMI Wrapper.
     """
 
     def __init__(self, agent: Agent, on_request: Callable[[ACLMessage], None]):
