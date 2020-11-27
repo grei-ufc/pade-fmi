@@ -130,3 +130,6 @@ dmypy.json
 
 # VS Code
 .vscode
+tests/PadeSlave.fmu
+PadeSlave_log.txt
+PadeSlave_result.mat
