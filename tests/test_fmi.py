@@ -19,7 +19,7 @@ from pade.misc.utility import display_message
 from pade_fmi import FmiAdapter, PadeSlave
 from pyfmi import load_fmu
 
-from tests.conftest import start_loop_test
+from conftest import start_loop_test
 
 logging.basicConfig(filename='pade-fmi.log', level=logging.DEBUG)
 
