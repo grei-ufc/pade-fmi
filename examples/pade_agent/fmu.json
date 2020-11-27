@@ -1,0 +1,24 @@
+{
+    "modelInfo": {
+        "author": "Marcos Bressan",
+        "description": "An FMI Wrapper base class for PADE"
+    },
+    "wrapperName": "fmi-wrapper",
+    "agent": "fmi-agent@localhost:12345",
+    "variables": [
+        {
+            "name": "inputVariable",
+            "type": "real",
+            "start": 0.0,
+            "causality": "input",
+            "variability": "continuous"
+        },
+        {
+            "name": "outputVariable",
+            "type": "real",
+            "causality": "output",
+            "variability": "continuous",
+            "start": 0.0
+        }
+    ]
+}
