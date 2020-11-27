@@ -1,6 +1,7 @@
 import json
-import os
 import logging
+import os
+import pickle
 import socket
 import time
 from queue import Queue
@@ -14,6 +15,7 @@ from pythonfmu.fmi2slave import Fmi2Slave
 import pade_fmi
 
 logging.basicConfig(filename='pade-fmi.log', level=logging.DEBUG)
+
 
 class PadeSlave(Fmi2Slave):
 
@@ -76,8 +78,7 @@ class PadeSlave(Fmi2Slave):
                         break
 
                     # Message received
-                    message = ACLMessage()
-                    message.set_message(data)
+                    message = pickle.loads(data)
                     self.queue.put(message)
 
                 conn.close()
@@ -109,8 +110,9 @@ class PadeSlave(Fmi2Slave):
         message.set_message_id()
         message.set_conversation_id(str(uuid1()))
         message.set_content(json.dumps(content))
+        message.set_datetime_now()
 
-        client.send(message.get_message())
+        client.send(pickle.dumps(message))
         client.close()
 
         return self.queue.get()
