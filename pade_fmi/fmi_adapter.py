@@ -24,6 +24,7 @@ class FmiAdapter(Behaviour):
 
     def send_inform(self, message: ACLMessage):
         """Use low-level twisted method to send message"""
+        message.set_performative(ACLMessage.INFORM)
         receiver = message.receivers[0]
         try:
             self.agent.agentInstance.messages.append((receiver, message))
