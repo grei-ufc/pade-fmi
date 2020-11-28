@@ -17,23 +17,102 @@ import pade_fmi
 logging.basicConfig(filename='pade-fmi.log', level=logging.DEBUG)
 
 
+class SimulationTerminated(Exception):
+    """Indicate end of simulation"""
+
+
+class Client:
+    def __init__(self, server_address):
+        self.server_address = server_address
+
+    def send(self, message):
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(self.server_address)
+        client.send(message)
+        client.close()
+
+
+class Server(Thread):
+    def __init__(self, queue):
+        super().__init__()
+        self.queue = queue
+        self.socket = self.open_socket()
+        self.is_active = True
+        self.start()
+
+    def open_socket(self):
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind(('localhost', 0))
+        server.setblocking(0)
+        server.listen(1)
+        return server
+
+    def get_address(self):
+        return self.socket.getsockname()
+
+    def terminate(self):
+        self.is_active = False
+
+    def run(self):
+
+        while self.is_active:
+            try:
+                conn, addr = self.socket.accept()
+                logging.debug(f'New connection from {(conn, addr)}')
+
+                while True:
+                    data = conn.recv(1024)
+                    if not data:
+                        break
+                    # Message received
+                    self.queue.put(data)
+                conn.close()
+
+            except BlockingIOError:
+                pass
+
+
+class MessageHandler:
+    @staticmethod
+    def create_message(slave, params):
+        content = {
+            var.name: var.getter()
+            for var in slave.vars.values()
+            if var.causality == pade_fmi.Fmi2Causality.input
+        }
+        content.update(params)
+
+        message = ACLMessage(ACLMessage.FIPA_REQUEST_PROTOCOL)
+        message.set_performative(ACLMessage.REQUEST)
+        message.set_sender(slave.wrapper_aid)
+        message.add_receiver(slave.agent_aid)
+        message.set_message_id()
+        message.set_conversation_id(str(uuid1()))
+        message.set_content(json.dumps(content))
+        message.set_datetime_now()
+
+        return pickle.dumps(message)
+
+    @staticmethod
+    def read_message(data):
+        message = pickle.loads(data)
+        return json.loads(message.content)
+
+
 class PadeSlave(Fmi2Slave):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        logging.info('Fmi2Slave.__init__')
+        logging.info('PadeSlave.__init__')
 
         self.load_config()
-        self._prepare_comms()
 
     def load_config(self):
-        logging.info('load_info')
-        logging.debug(__file__)
         try:
             with open(os.path.dirname(__file__) + '/fmu.json') as file:
                 config = json.load(file)
         except Exception as e:
-            logging.critical('File not found')
+            logging.critical('PadeSlave.File not found')
             raise e
 
         if 'modelInfo' in config:
@@ -56,87 +135,58 @@ class PadeSlave(Fmi2Slave):
             var_instance = var_type(**params)
             self.register_variable(var_instance)
 
-    def _prepare_comms(self):
-        self.queue = Queue()
+    def wait_for_event(self):
+        logging.info('PadeSlave.wait_for_event')
 
-        def receiving():
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server.bind(('localhost', 0))
-            server.listen(1)
+        data = self.events_queue.get()
 
-            self.wrapper_aid = AID(
-                f"{self.wrapper_name}@{':'.join(map(str, server.getsockname()))}"
-            )
+        if data == b'terminate':
+            self.server.terminate()
+            raise SimulationTerminated
 
-            while True:
-                conn, addr = server.accept()
-                logging.debug(f'New connection from {(conn, addr)}')
+        return data
 
-                while True:
-                    data = conn.recv(1024)
-                    if not data:
-                        break
+    def send_message(self, **params):
+        """Send message to agent."""
+        logging.info('PadeSlave.send_message')
+        message = MessageHandler.create_message(self, params)
 
-                    # Message received
-                    message = pickle.loads(data)
-                    self.queue.put(message)
-
-                conn.close()
-
-        self.thread = Thread(target=receiving)
-
-    def get_agent_response(self, **kwargs):
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        while True:
-            try:
-                client.connect((self.agent_aid.host, self.agent_aid.port))
-            except ConnectionRefusedError:
-                pass
-            else:
-                logging.info(f'Connected to agent {self.agent_aid.name}')
-                break
-
-        content = {
-            var.name: var.getter()
-            for var in self.vars.values()
-            if var.causality == pade_fmi.Fmi2Causality.input}
-        content.update(kwargs)
-
-        message = ACLMessage(ACLMessage.FIPA_REQUEST_PROTOCOL)
-        message.set_performative(ACLMessage.REQUEST)
-        message.set_sender(self.wrapper_aid)
-        message.add_receiver(self.agent_aid)
-        message.set_message_id()
-        message.set_conversation_id(str(uuid1()))
-        message.set_content(json.dumps(content))
-        message.set_datetime_now()
-
-        client.send(pickle.dumps(message))
-        client.close()
-
-        return self.queue.get()
+        self.client.send(message)
 
     def setup_experiment(self, start_time):
-        logging.info('setup_experiment')
-        self.thread.start()
+        logging.info('PadeSlave.setup_experiment')
+        self.events_queue = Queue()
+
+        self.client = Client((self.agent_aid.host, self.agent_aid.port))
+        self.server = Server(self.events_queue)
+        self.wrapper_aid = AID(
+            f"{self.wrapper_name}@{':'.join(map(str, self.server.get_address()))}"
+        )
 
     def enter_initialization_mode(self):
-        logging.info('enter_initialization_mode')
+        logging.info('PadeSlave.enter_initialization_mode')
 
     def exit_initialization_mode(self):
-        logging.info('exit_initialization_mode')
+        logging.info('PadeSlave.exit_initialization_mode')
 
     def do_step(self, current_time, step_size):
-        logging.info(f'do_step {current_time, step_size}')
-        # Get all variables
-        message = self.get_agent_response(
+        logging.info(f'PadeSlave.do_step {current_time, step_size}')
+
+        # Send message and wait for response
+        self.send_message(
             current_time=current_time,
             step_size=step_size
         )
-        response = json.loads(message.content)
 
-        for key, value in response.items():
-            setattr(self, key, value)
+        try:
+            response = self.wait_for_event()
+            for var, value in MessageHandler.read_message(response).items():
+                setattr(self, var, value)
+        except SimulationTerminated:
+            pass
 
         return True
+
+    def terminate(self):
+        logging.info('PadeSlave.terminate')
+        self.events_queue.put(b'terminate')
