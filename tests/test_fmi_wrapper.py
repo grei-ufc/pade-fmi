@@ -8,7 +8,6 @@ def test_server():
     queue = Queue()
     server = Server(queue)
     print(server.get_address())
-    server.start()
     server.terminate()
     server.join()
 
