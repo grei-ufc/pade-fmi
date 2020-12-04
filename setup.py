@@ -20,13 +20,15 @@ setup(name='pade-fmi',
           ]
       },
       packages=find_packages(),
+      package_data={'pade_fmi': ['*.txt']},
       install_requires=[
           'pade',
           'pythonfmu'
       ],
       tests_require=[
           'pytest',
-          'pyfmi'
+          'pyfmi',
+          'matplotlib'
       ],
       classifiers=[
               'Intended Audience :: Developers',

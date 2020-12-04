@@ -11,15 +11,17 @@ The adapter is composed of two pieces:
 
 ---
 ## Installation
-Currently, this package requires the installation of the following modules for FMI compatibility:
-- Sundials
-- Assimulo
-- PyFMI
-- PythonFMU
 
-**Diclaimer**: Most of these are required for both _Model Exchange_ and _Co-simulation_ FMI specifications, but this project is designed to be applied only in Co-simulation environments.
-For this reason, in next releases, I intend to pre-compile only the libraries strictly necessary to this package in order to avoid unnecessary installations.
-Feel free to collaborate and pull request your improvements.
+### Using Anaconda
+
+Run the following commands in a terminal to install all necessary packages:
+```bash
+pip install pade && pade create-pade-db
+conda install -y -c conda-forge pythonfmu
+conda install -y -c conda-forge pyfmi
+git clone --depth=1 https://github.com/bressanmarcos/pade-fmi
+pip install ./pade-fmi
+```
 
 ---
 ## Usage
