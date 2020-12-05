@@ -12,7 +12,7 @@ from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pythonfmu.fmi2slave import Fmi2Slave
 
-import pade_fmi
+import pade.fmi
 
 logging.basicConfig(filename='pade-fmi.log', level=logging.DEBUG)
 
@@ -78,7 +78,7 @@ class MessageHandler:
         content = {
             var.name: var.getter()
             for var in slave.vars.values()
-            if var.causality == pade_fmi.Fmi2Causality.input
+            if var.causality == pade.fmi.Fmi2Causality.input
         }
         content.update(params)
 
@@ -127,11 +127,11 @@ class PadeSlave(Fmi2Slave):
             params = {
                 'name': var['name'],
                 'description': var.get('description', None),
-                'causality': getattr(pade_fmi.Fmi2Causality, var['causality']) if 'causality' in var else None,
-                'variability': getattr(pade_fmi.Fmi2Variability, var['variability']) if 'variability' in var else None,
-                'initial': getattr(pade_fmi.Fmi2Initial, var['initial']) if 'initial' in var else None
+                'causality': getattr(pade.fmi.Fmi2Causality, var['causality']) if 'causality' in var else None,
+                'variability': getattr(pade.fmi.Fmi2Variability, var['variability']) if 'variability' in var else None,
+                'initial': getattr(pade.fmi.Fmi2Initial, var['initial']) if 'initial' in var else None
             }
-            var_type = getattr(pade_fmi, var['type'].title())
+            var_type = getattr(pade.fmi, var['type'].title())
             var_instance = var_type(**params)
             self.register_variable(var_instance)
 
@@ -142,6 +142,7 @@ class PadeSlave(Fmi2Slave):
 
         if data == b'terminate':
             self.server.terminate()
+            self.server.join()
             raise SimulationTerminated
 
         return data

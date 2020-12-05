@@ -13,7 +13,7 @@ from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.core.agent import Agent
 from pade.misc.utility import display_message
-from pade_fmi import FmiAdapter, PadeSlave
+from pade.fmi import FmiAdapter, PadeSlave
 from pyfmi import load_fmu
 
 from conftest import start_loop_test
@@ -58,13 +58,11 @@ def test_padefmi(start_runtime, fmu_generate):
 
     # Start PyFMI thread that waits for agent
     def pade():
-
         agent = FMIAgent(AID('agent@localhost:55555'))
         agent.ams = ams_dict
 
         with start_loop_test([agent]):
-            time.sleep(15)
-
+            time.sleep(10)
     p = Process(target=pade)
     p.start()
 

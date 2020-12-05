@@ -1,7 +1,7 @@
 import time
 from queue import Queue
 
-from pade_fmi.fmi_wrapper import Server
+from pade.fmi.fmi_wrapper import Server
 
 
 def test_server():

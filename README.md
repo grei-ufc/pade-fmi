@@ -9,9 +9,7 @@ The adapter is composed of two pieces:
 
 *As stated in FIPA specs, the AID (Agent Identifier) labels an agent and contains the agent's transport address(es).
 
----
 ## Installation
-
 ### Using Anaconda
 
 Run the following commands in a terminal to install all necessary packages:
@@ -23,7 +21,6 @@ git clone --depth=1 https://github.com/bressanmarcos/pade-fmi
 pip install ./pade-fmi
 ```
 
----
 ## Usage
 Example available [here](https://github.com/bressanmarcos/pade-fmi/tree/master/examples/pade_agent).
 

@@ -1,6 +1,6 @@
 import os
 import argparse
-import pade_fmi
+import pade.fmi
 from pythonfmu.builder import FmuBuilder
 
 from .__version__ import __version__
@@ -18,7 +18,7 @@ def main():
     args = parser.parse_args()
 
     FmuBuilder.build_FMU(
-        script_file=pade_fmi.fmi_wrapper.__file__,
+        script_file=pade.fmi.fmi_wrapper.__file__,
         dest=args.dest,
         project_files=args.project_files +
         [os.path.join(os.path.dirname(__file__), 'requirements.txt')],

@@ -1,6 +1,8 @@
+import os
+os.sys.path.insert(0, os.path.join(os.getcwd(), 'pade', 'fmi'))
+from __version__ import __version__
 
-from setuptools import setup, find_packages
-from pade_fmi.__version__ import __version__
+from setuptools import setup
 
 with open("README.md", "r", encoding='UTF-8') as fh:
     long_description = fh.read()
@@ -16,11 +18,11 @@ setup(name='pade-fmi',
       keywords='multiagent distributed systems',
       entry_points={
           'console_scripts': [
-              'pade-fmi = pade_fmi.__main__:main'
+              'pade-fmi = pade.fmi.__main__:main'
           ]
       },
-      packages=find_packages(),
-      package_data={'pade_fmi': ['*.txt']},
+      packages=['pade.fmi'],
+      package_data={'pade.fmi': ['*.txt']},
       install_requires=[
           'pade',
           'pythonfmu'

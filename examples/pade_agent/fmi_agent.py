@@ -4,7 +4,7 @@ from pade.acl.aid import AID
 from pade.acl.messages import ACLMessage
 from pade.core.agent import Agent
 from pade.misc.utility import display_message, start_loop
-from pade_fmi import FmiAdapter
+from pade.fmi import FmiAdapter
 
 
 class FMIAgent(Agent):
