@@ -34,7 +34,7 @@ class FMIAgent(Agent):
         reply.set_content(json.dumps({
             'output': str(content['input'] * 2 + 2*content['current_time'])
         }))
-        self.fmi_adapter.send_inform(reply)
+        self.fmi_adapter.inform(reply)
 
 
 @pytest.fixture(scope='module')
@@ -74,3 +74,29 @@ def test_padefmi(start_runtime, fmu_generate):
     plt.legend(['input', 'output'])
     plt.xlabel('time')
     plt.show()
+
+
+if __name__ == "__main__":
+
+    import subprocess
+    from random import randint
+    from pade.core import new_ams
+
+    processes = []
+    ams_dict = {'name': 'localhost', 'port': randint(9000, 60000)}
+
+    # Start AMS in a subprocess
+    commands = ['python', new_ams.__file__, 'pade_user',
+                'email@', '12345', str(ams_dict['port'])]
+    p = subprocess.Popen(commands, stdin=subprocess.PIPE)
+    processes.append(p)
+
+    # Delay before tests to start AMS
+    time.sleep(5.0)
+
+    this_folder = os.path.dirname(__file__)
+    fmu_json = os.path.join(this_folder, 'fmu.json')
+    fmu_file = os.path.join(this_folder, f'{PadeSlave.__name__}.fmu')
+    os.system(f'pade-fmi {fmu_json} -d {this_folder}')
+
+    test_padefmi(ams_dict, './tests/PadeSlave.fmu')

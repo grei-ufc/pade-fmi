@@ -22,7 +22,7 @@ class FmiAdapter(Behaviour):
         if message.sender.localname == self.wrapper_name:
             self.on_request(message)
 
-    def send_inform(self, message: ACLMessage):
+    def inform(self, message: ACLMessage):
         """Use low-level twisted method to send message"""
         message.set_performative(ACLMessage.INFORM)
         receiver = message.receivers[0]

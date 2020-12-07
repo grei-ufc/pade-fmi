@@ -21,7 +21,7 @@ class FMIAgent(Agent):
         reply.set_content(json.dumps({
             'outputVariable': content['inputVariable'] * 2 + 2*content['current_time']
         }))
-        self.fmi_adapter.send_inform(reply)
+        self.fmi_adapter.inform(reply)
 
 if __name__ == "__main__":
     agent = FMIAgent(AID('fmi-agent@localhost:12345'))
